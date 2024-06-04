@@ -1,0 +1,269 @@
+import java.util.*;
+
+public class AVLTree {
+
+    class Node { // узел АВЛ-дерева
+        int key, height; // Поля для хранения ключа узла и его высоты в дереве
+        Node left, right; // Ссылки на левого и правого потомка узла
+
+        Node(int d) { // Конструктор класса Node, который инициализирует узел с заданным ключом
+            key = d; // Присваивание ключа узла
+            height = 1; // Установка начальной высоты узла как 1
+        }
+    }
+
+    Node root; // Поле для хранения корня АВЛ-дерева
+
+    // Метод для получения высоты узла
+    int height(Node N) {
+        if (N == null) // Если узел не существует, то его высота равна 0
+            return 0;
+        return N.height; // В противном случае возвращается высота узла
+    }
+
+    // Метод для получения максимального из двух чисел
+    int max(int a, int b) {
+        return (a > b) ? a : b; // Возвращает большее из двух значений a и b
+    }
+
+    // Метод для выполнения правого поворота вокруг узла y
+    Node rightRotate(Node y) {
+        Node x = y.left; // Переменная для левого потомка узла y
+        Node T2 = x.right; // Переменная для правого потомка узла x
+
+        // Выполнение поворота
+        x.right = y; // Установка y как правого потомка x
+        y.left = T2; // Установка T2 как левого потомка y
+
+        // Обновление высот узлов
+        y.height = max(height(y.left), height(y.right)) + 1; // Обновление высоты узла y
+        x.height = max(height(x.left), height(x.right)) + 1; // Обновление высоты узла x
+
+        return x; // Возвращаем новый корень поддерева
+    }
+
+    // Метод для выполнения левого поворота вокруг узла x
+    Node leftRotate(Node x) {
+        Node y = x.right; // Переменная для правого потомка узла x
+        Node T2 = y.left; // Переменная для левого потомка узла y
+
+        // Выполнение поворота
+        y.left = x; // Установка x как левого потомка y
+        x.right = T2; // Установка T2 как правого потомка x
+
+        // Обновление высот узлов
+        x.height = max(height(x.left), height(x.right)) + 1; // Обновление высоты узла x
+        y.height = max(height(y.left), height(y.right)) + 1; // Обновление высоты узла y
+
+        return y; // Возвращаем новый корень поддерева
+    }
+
+    // Метод для получения баланса узла N
+    int getBalance(Node N) {
+        if (N == null) // Если узел отсутствует, баланс равен 0
+            return 0;
+        return height(N.left) - height(N.right); // Вычисляем разницу высот левого и правого поддеревьев
+    }
+
+    // Метод для вставки ключа в АВЛ-дерево
+    Node insert(Node node, int key) {
+        if (node == null) // Если узел отсутствует, создаем новый узел с заданным ключом
+            return (new Node(key));
+
+        // Рекурсивная вставка ключа в соответствующее поддерево
+        if (key < node.key) // Если вставляемый ключ меньше ключа узла, вставляем в левое поддерево
+            node.left = insert(node.left, key);
+        else if (key > node.key) // Если вставляемый ключ больше, вставляем в правое поддерево
+            node.right = insert(node.right, key);
+        else // Если ключ уже существует, возвращаем узел без изменений
+            return node;
+
+        // Обновление высоты узла
+        node.height = 1 + max(height(node.left), height(node.right));
+
+        // Получение баланса для узла
+        int balance = getBalance(node);
+
+        // Четыре случая дисбаланса и их коррекция с помощью поворотов
+        // Случай левого-левого дисбаланса
+        if (balance > 1 && key < node.left.key)
+            return rightRotate(node);
+        // Случай правого-правого дисбаланса
+        if (balance < -1 && key > node.right.key)
+            return leftRotate(node);
+        // Случай левого-правого дисбаланса
+        if (balance > 1 && key > node.left.key) {
+            node.left = leftRotate(node.left);
+            return rightRotate(node);
+        }
+        // Случай правого-левого дисбаланса
+        if (balance < -1 && key < node.right.key) {
+            node.right = rightRotate(node.right);
+            return leftRotate(node);
+        }
+
+        return node; // Возвращаем измененный узел как новый корень поддерева
+    }
+
+    // Метод для поиска узла с заданным ключом в дереве
+    Node search(Node root, int key) {
+        if (root == null || root.key == key) // Если узел найден или достигнут конец дерева, возвращаем узел
+            return root;
+
+        if (root.key > key) // Если ключ меньше ключа узла, продолжаем поиск в левом поддереве
+            return search(root.left, key);
+
+        return search(root.right, key); // В противном случае продолжаем поиск в правом поддереве
+    }
+
+    // Метод для проверки, является ли дерево сбалансированным
+    boolean isBalanced(Node node) {
+        int leftHeight;
+        int rightHeight;
+
+        if (node == null) // Если дерево пустое, оно сбалансировано
+            return true;
+
+        leftHeight = height(node.left); // Вычисление высоты левого поддерева
+        rightHeight = height(node.right); // Вычисление высоты правого поддерева
+
+        // Проверка условий баланса: разница высот поддеревьев не больше 1 и поддеревья сбалансированы
+        if (Math.abs(leftHeight - rightHeight) <= 1 && isBalanced(node.left) && isBalanced(node.right))
+            return true;
+
+        return false; // Дерево не сбалансировано
+    }
+
+    // Метод для нахождения высоты дерева
+    int findHeight(Node node) {
+        if (node == null) // Если дерево пустое, его высота равна 0
+            return 0;
+
+        return 1 + max(findHeight(node.left), findHeight(node.right)); // Рекурсивное вычисление максимальной высоты поддеревьев
+    }
+
+    // Обход дерева в прямом порядке (preorder)
+    void preOrder(Node node) {
+        if (node != null) {
+            System.out.print(node.key + " "); // Печать ключа текущего узла
+            preOrder(node.left); // Рекурсивный вызов для левого поддерева
+            preOrder(node.right); // Рекурсивный вызов для правого поддерева
+        }
+    }
+
+    // Орграф представлен в виде списка смежности
+    static class Graph {
+        private int V;   // Количество вершин в графе
+        private LinkedList<Integer>[] adj; // Массив списков смежности для хранения ребер
+
+        Graph(int v) {
+            V = v; // Инициализация количества вершин
+            adj = new LinkedList[v]; // Создание списка смежности для каждой вершины
+            for (int i = 0; i < v; ++i)
+                adj[i] = new LinkedList(); // Инициализация списка смежности для каждой вершины
+        }
+
+        void addEdge(int v, int w) {
+            adj[v].add(w); // Добавление направленного ребра от вершины v к вершине w
+        }
+
+        // Обход в ширину
+        void BFS(int s) {
+            boolean visited[] = new boolean[V]; // Массив для отметки посещенных вершин
+            LinkedList<Integer> queue = new LinkedList<Integer>(); // Создание очереди для хранения вершин для обхода
+
+            visited[s] = true; // Отметить начальную вершину как посещенную
+            queue.add(s); // Добавить начальную вершину в очередь
+
+            while (queue.size() != 0) {
+                s = queue.poll(); // Извлечение вершины из очереди
+                System.out.print(s + " "); // Печать текущей вершины
+
+                Iterator<Integer> i = adj[s].listIterator(); // Получение итератора для списка смежности текущей вершины
+                while (i.hasNext()) {
+                    int n = i.next();
+                    if (!visited[n]) { // Если соседняя вершина не была посещена
+                        visited[n] = true; // Отметить как посещенную
+                        queue.add(n); // Добавить в очередь для последующего обхода
+                    }
+                }
+            }
+        }
+
+        // Обход в глубину с использованием рекурсии
+        void DFSUtil(int v, boolean visited[]) {
+            visited[v] = true; // Пометить текущую вершину как посещенную
+            System.out.print(v + " "); // Печать текущей вершины
+
+            Iterator<Integer> i = adj[v].listIterator(); // Получение итератора для списка смежности текущей вершины
+            while (i.hasNext()) {
+                int n = i.next();
+                if (!visited[n]) // Если соседняя вершина не была посещена
+                    DFSUtil(n, visited); // Рекурсивный вызов для не посещенной вершины
+            }
+        }
+
+        // Метод для запуска DFS из определенной вершины
+        void DFS(int v) {
+            boolean visited[] = new boolean[V]; // Массив для отметки посещенных вершин
+            DFSUtil(v, visited); // Вызов вспомогательного метода DFS
+        }
+    }
+
+    public static void main(String[] args) {
+        AVLTree tree = new AVLTree(); // Создание экземпляра AVL дерева
+        Graph g = new Graph(4); // Создание графа с 4 вершинами
+        // Добавление ребер в граф
+        g.addEdge(0, 1);
+        g.addEdge(0, 2);
+        g.addEdge(1, 2);
+        g.addEdge(2, 0);
+        g.addEdge(2, 3);
+        g.addEdge(3, 3);
+
+        Scanner scanner = new Scanner(System.in); // Создание объекта Scanner для чтения ввода пользователя
+        boolean exit = false; // Флаг для контроля выхода из цикла ввода
+        while (!exit) { // Цикл для обработки выбора пользователя
+            System.out.println("\n1) Добавить узел 2) Найти узел 3) Проверить баланс 4) Найти высоту 5) Обход 6) Выход");
+            int choice = scanner.nextInt(); // Чтение выбора пользователя
+            switch (choice) { // Обработка ввода пользователя с помощью оператора switch
+                case 1:
+                    System.out.print("Введите ключ для вставки: ");
+                    int key = scanner.nextInt();
+                    tree.root = tree.insert(tree.root, key); // Вставка ключа в дерево
+                    break;
+                case 2:
+                    System.out.print("Введите ключ для поиска: ");
+                    key = scanner.nextInt();
+                    System.out.println("Узел " + (tree.search(tree.root, key) != null ? "найден" : "не найден")); // Поиск ключа в дереве
+                    break;
+                case 3:
+                    System.out.println("Дерево " + (tree.isBalanced(tree.root) ? "" : "не ") + "сбалансировано"); // Проверка баланса дерева
+                    break;
+                case 4:
+                    System.out.println("Высота дерева составляет " + tree.findHeight(tree.root)); // Определение высоты дерева
+                    break;
+                case 5:
+                    System.out.println("Выберите тип обхода: 1) В ширину 2) В глубину");
+                    int type = scanner.nextInt(); // Чтение выбора типа обхода
+                    if (type == 1) {
+                        System.out.println("Обход в ширину орграфа:");
+                        g.BFS(2); // Обход в ширину для вершины 2
+                    } else if (type == 2) {
+                        System.out.println("Обход в глубину орграфа:");
+                        g.DFS(2); // Обход в глубину для вершины 2
+                    } else {
+                        System.out.println("Неверный выбор!"); // Некорректный ввод типа обхода
+                    }
+                    break;
+                case 6:
+                    exit = true; // Выход из программы
+                    break;
+                default:
+                    System.out.println("Неверный ввод"); // Обработка неверного ввода
+                    break;
+            }
+        }
+        scanner.close(); 
+    }
+}
